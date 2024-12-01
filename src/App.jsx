@@ -1,39 +1,35 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Timer, Play, Pause, RefreshCw } from 'lucide-react';
 
 const PomodoroTimer = () => {
   const [time, setTime] = useState(25 * 60); // Default 25 minutes
   const [isRunning, setIsRunning] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(25);
-  const intervalRef = useRef(null);
+  const [startTime, setStartTime] = useState(null);
 
   // Preset durations
   const durations = [15, 25, 35, 45];
 
-  // Update browser tab title with remaining time
   useEffect(() => {
-    // Update document title with current time
-    document.title = `${formatTime(time)} - Pomodoro Timer`;
-  
-    if (isRunning) {
-      const interval = setInterval(() => {
-        setTime(prevTime => {
-          // Update document title in each interval
-          document.title = `${formatTime(prevTime - 1)} - Pomodoro Timer`;
-          
-          if (prevTime <= 1) {
-            clearInterval(interval);
-            setIsRunning(false);
-            document.title = 'Pomodoro Timer';
-            return 0;
-          }
-          return prevTime - 1;
-        });
-      }, 1000);
-  
-      return () => clearInterval(interval);
-    }
-  }, [isRunning, time]);
+    if (!isRunning) return;
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const elapsedTime = Math.floor((now - startTime) / 1000);
+      const newTime = Math.max(selectedDuration * 60 - elapsedTime, 0);
+
+      setTime(newTime);
+      document.title = `${formatTime(newTime)} - Pomodoro Timer`;
+
+      if (newTime === 0) {
+        clearInterval(intervalId);
+        setIsRunning(false);
+        document.title = 'Pomodoro Timer';
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isRunning, startTime, selectedDuration]);
 
   // Format time to MM:SS
   const formatTime = (totalSeconds) => {
@@ -44,26 +40,28 @@ const PomodoroTimer = () => {
 
   // Start/Pause timer
   const toggleTimer = () => {
-    setIsRunning(prev => !prev);
+    if (!isRunning) {
+      setStartTime(Date.now() - (selectedDuration * 60 - time) * 1000);
+    }
+    setIsRunning((prev) => !prev);
   };
 
   // Reset timer
   const resetTimer = () => {
-    clearInterval(intervalRef.current);
     setTime(selectedDuration * 60);
     setIsRunning(false);
+    document.title = 'Pomodoro Timer';
   };
 
   // Select duration
   const handleDurationSelect = (duration) => {
-    clearInterval(intervalRef.current);
     setSelectedDuration(duration);
     setTime(duration * 60);
     setIsRunning(false);
   };
 
   // Calculate progress percentage
-  const progressPercentage = 
+  const progressPercentage =
     ((selectedDuration * 60 - time) / (selectedDuration * 60)) * 100;
 
   return (
@@ -82,8 +80,8 @@ const PomodoroTimer = () => {
               key={duration}
               onClick={() => handleDurationSelect(duration)}
               className={`px-4 py-2 rounded-full transition-all duration-300 ${
-                selectedDuration === duration 
-                  ? 'bg-white text-indigo-600 shadow-lg' 
+                selectedDuration === duration
+                  ? 'bg-white text-indigo-600 shadow-lg'
                   : 'bg-white/20 text-white hover:bg-white/30'
               }`}
             >
@@ -95,28 +93,28 @@ const PomodoroTimer = () => {
         {/* Timer Container */}
         <div className="relative w-full aspect-square flex items-center justify-center">
           {/* Progress Ring */}
-          <svg 
-            className="absolute top-0 left-0 w-full h-full" 
+          <svg
+            className="absolute top-0 left-0 w-full h-full"
             viewBox="0 0 100 100"
           >
-            <circle 
-              cx="50" 
-              cy="50" 
-              r="45" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.2)" 
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="rgba(255,255,255,0.2)"
               strokeWidth="6"
             />
-            <circle 
-              cx="50" 
-              cy="50" 
-              r="45" 
-              fill="none" 
-              stroke="white" 
+            <circle
+              cx="50"
+              cy="50"
+              r="45"
+              fill="none"
+              stroke="white"
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray="283"
-              strokeDashoffset={283 - (progressPercentage * 2.83)}
+              strokeDashoffset={283 - progressPercentage * 2.83}
               transform="rotate(-90 50 50)"
             />
           </svg>
@@ -129,14 +127,14 @@ const PomodoroTimer = () => {
 
         {/* Control Buttons */}
         <div className="flex justify-center space-x-6 mt-6">
-          <button 
-            onClick={toggleTimer} 
+          <button
+            onClick={toggleTimer}
             className="bg-white/20 text-white p-3 rounded-full hover:bg-white/30 transition-all"
           >
             {isRunning ? <Pause size={24} /> : <Play size={24} />}
           </button>
-          <button 
-            onClick={resetTimer} 
+          <button
+            onClick={resetTimer}
             className="bg-white/20 text-white p-3 rounded-full hover:bg-white/30 transition-all"
           >
             <RefreshCw size={24} />
@@ -144,15 +142,16 @@ const PomodoroTimer = () => {
         </div>
       </div>
       <div className="absolute bottom-4 right-4 text-white/50 text-sm">
-  Built by <a 
-    href="https://github.com/mqasimkh" 
-    target="_blank" 
-    rel="noopener noreferrer" 
-    className="underline hover:text-white/75 transition-colors"
-  >
-    Muhammad Qasim
-  </a>
-</div>
+        Built by{' '}
+        <a
+          href="https://github.com/mqasimkh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-white/75 transition-colors"
+        >
+          Muhammad Qasim
+        </a>
+      </div>
     </div>
   );
 };
