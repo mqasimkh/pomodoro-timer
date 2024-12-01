@@ -1,15 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { Timer, Play, Pause, RefreshCw } from 'lucide-react';
+import { Timer, Play, Pause, RefreshCw, Sun, Moon } from 'lucide-react';
 
 const PomodoroTimer = () => {
   const [time, setTime] = useState(25 * 60); // Default 25 minutes
   const [isRunning, setIsRunning] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(25);
   const [startTime, setStartTime] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Preset durations
   const durations = [15, 25, 35, 45];
 
+  // Load theme and timer state from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const savedTimer = JSON.parse(localStorage.getItem('timerState'));
+
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+
+    if (savedTimer) {
+      const { savedTime, savedIsRunning, savedStartTime, savedDuration } = savedTimer;
+      setTime(savedTime);
+      setSelectedDuration(savedDuration);
+      setIsRunning(savedIsRunning);
+      setStartTime(savedStartTime);
+    }
+  }, []);
+
+  // Save timer state to localStorage whenever relevant state changes
+  useEffect(() => {
+    const timerState = {
+      savedTime: time,
+      savedIsRunning: isRunning,
+      savedStartTime: startTime,
+      savedDuration: selectedDuration,
+    };
+    localStorage.setItem('timerState', JSON.stringify(timerState));
+  }, [time, isRunning, startTime, selectedDuration]);
+
+  // Timer logic
   useEffect(() => {
     if (!isRunning) return;
 
@@ -25,11 +56,30 @@ const PomodoroTimer = () => {
         clearInterval(intervalId);
         setIsRunning(false);
         document.title = 'Pomodoro Timer';
+        sendNotification("Pomodoro complete! Time for a break.");
       }
     }, 1000);
 
     return () => clearInterval(intervalId);
   }, [isRunning, startTime, selectedDuration]);
+
+  // Notification logic
+  const sendNotification = (message) => {
+    if (Notification.permission === 'granted') {
+      new Notification('Pomodoro Timer', {
+        body: message,
+        icon: 'https://example.com/pomodoro-icon.png',
+      });
+    } else if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  };
+
+  useEffect(() => {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Format time to MM:SS
   const formatTime = (totalSeconds) => {
@@ -60,17 +110,35 @@ const PomodoroTimer = () => {
     setIsRunning(false);
   };
 
+  // Theme toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+    localStorage.setItem('theme', !isDarkMode ? 'dark' : 'light');
+  };
+
   // Calculate progress percentage
   const progressPercentage =
     ((selectedDuration * 60 - time) / (selectedDuration * 60)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-4">
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 ${
+        isDarkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-black'
+      }`}
+    >
       <div className="relative bg-white/20 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-center mb-6">
-          <Timer className="text-white mr-2" size={32} />
-          <h1 className="text-2xl font-bold text-white">Pomodoro Timer</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Timer className={`mr-2 ${isDarkMode ? 'text-white' : 'text-black'}`} size={32} />
+            <h1 className="text-2xl font-bold">Pomodoro Timer</h1>
+          </div>
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full transition-all hover:bg-white/30"
+          >
+            {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
+          </button>
         </div>
 
         {/* Duration Selector */}
@@ -120,9 +188,7 @@ const PomodoroTimer = () => {
           </svg>
 
           {/* Time Display */}
-          <div className="z-10 text-6xl font-bold text-white">
-            {formatTime(time)}
-          </div>
+          <div className="z-10 text-6xl font-bold">{formatTime(time)}</div>
         </div>
 
         {/* Control Buttons */}
@@ -141,7 +207,7 @@ const PomodoroTimer = () => {
           </button>
         </div>
       </div>
-      <div className="absolute bottom-4 right-4 text-white/50 text-sm">
+      <div className="absolute bottom-4 right-4 text-sm">
         Built by{' '}
         <a
           href="https://github.com/mqasimkh"
