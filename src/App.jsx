@@ -12,26 +12,28 @@ const PomodoroTimer = () => {
 
   // Update browser tab title with remaining time
   useEffect(() => {
+    // Update document title with current time
+    document.title = `${formatTime(time)} - Pomodoro Timer`;
+  
     if (isRunning) {
-      document.title = `${formatTime(time)} - Pomodoro Timer`;
-      
-      intervalRef.current = setInterval(() => {
+      const interval = setInterval(() => {
         setTime(prevTime => {
+          // Update document title in each interval
+          document.title = `${formatTime(prevTime - 1)} - Pomodoro Timer`;
+          
           if (prevTime <= 1) {
-            clearInterval(intervalRef.current);
+            clearInterval(interval);
             setIsRunning(false);
+            document.title = 'Pomodoro Timer';
             return 0;
           }
           return prevTime - 1;
         });
       }, 1000);
-    } else {
-      clearInterval(intervalRef.current);
-      document.title = 'Pomodoro Timer';
+  
+      return () => clearInterval(interval);
     }
-
-    return () => clearInterval(intervalRef.current);
-  }, [isRunning]);
+  }, [isRunning, time]);
 
   // Format time to MM:SS
   const formatTime = (totalSeconds) => {
