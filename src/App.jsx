@@ -141,6 +141,16 @@ const PomodoroTimer = () => {
           </button>
         </div>
       </div>
+      <div className="absolute bottom-4 right-4 text-white/50 text-sm">
+  Built by <a 
+    href="https://github.com/mqasimkh" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    className="underline hover:text-white/75 transition-colors"
+  >
+    Muhammad Qasim
+  </a>
+</div>
     </div>
   );
 };
