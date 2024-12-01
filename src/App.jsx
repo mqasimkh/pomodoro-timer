@@ -8,8 +8,8 @@ const PomodoroTimer = () => {
   const [startTime, setStartTime] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Preset durations
-  const durations = [15, 25, 35, 45];
+  // Preset durations (added 5 minutes)
+  const durations = [5, 15, 25];
 
   // Load theme and timer state from localStorage on mount
   useEffect(() => {
@@ -68,16 +68,28 @@ const PomodoroTimer = () => {
     if (Notification.permission === 'granted') {
       new Notification('Pomodoro Timer', {
         body: message,
-        icon: 'https://example.com/pomodoro-icon.png',
+        icon: 'https://via.placeholder.com/48', // Replace with your app icon URL
       });
     } else if (Notification.permission === 'default') {
-      Notification.requestPermission();
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          new Notification('Pomodoro Timer', {
+            body: message,
+            icon: 'https://via.placeholder.com/48',
+          });
+        } else {
+          console.warn('Notification permission denied.');
+        }
+      });
     }
   };
 
+  // Request notification permissions on app load
   useEffect(() => {
     if (Notification.permission === 'default') {
-      Notification.requestPermission();
+      Notification.requestPermission().catch((err) =>
+        console.error('Notification permission request failed:', err)
+      );
     }
   }, []);
 
