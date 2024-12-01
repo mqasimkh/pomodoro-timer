@@ -207,7 +207,7 @@ const PomodoroTimer = () => {
           </button>
         </div>
       </div>
-      <div className="absolute bottom-4 right-4 text-sm">
+      <div className="absolute bottom-4 right-4 text-sm text-white">
         Built by{' '}
         <a
           href="https://github.com/mqasimkh"
